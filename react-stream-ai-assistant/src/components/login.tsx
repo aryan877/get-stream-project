@@ -1,3 +1,4 @@
+import { sha256 } from "js-sha256";
 import { Bot } from "lucide-react";
 import React, { useState } from "react";
 import { User } from "stream-chat";
@@ -17,17 +18,13 @@ interface LoginProps {
   onLogin: (user: User) => void;
 }
 
-// Function to create a deterministic user ID from username
+// Function to create a deterministic user ID from username using SHA-256
 const createUserIdFromUsername = (username: string): string => {
-  // Simple hash function to create a consistent ID from username
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    const char = username.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  // Convert to positive number and add prefix for readability
-  return `user_${Math.abs(hash).toString(36)}`;
+  // Use SHA-256 hash for secure, deterministic ID generation
+  const hash = sha256(username.toLowerCase().trim());
+
+  // Take first 12 characters and add prefix for readability
+  return `user_${hash.substring(0, 12)}`;
 };
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
