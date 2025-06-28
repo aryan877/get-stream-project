@@ -199,7 +199,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
           Preview={(previewProps) => (
             <div
               className={cn(
-                "flex items-center p-2 rounded-lg cursor-pointer transition-colors relative group",
+                "flex items-center p-2 rounded-lg cursor-pointer transition-colors relative group mb-1",
                 previewProps.active
                   ? "bg-primary/20 text-primary-foreground"
                   : "hover:bg-muted/50"
@@ -219,7 +219,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 onClick={async (e) => {
                   e.stopPropagation();
                   handleDeleteClick(previewProps.channel);

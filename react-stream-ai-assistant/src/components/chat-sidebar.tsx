@@ -63,7 +63,7 @@ export const ChatSidebar = ({
 
         {/* Channel List */}
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-1">{children}</div>
+          <div className="p-4 space-y-0">{children}</div>
         </ScrollArea>
 
         {/* New Chat Button */}

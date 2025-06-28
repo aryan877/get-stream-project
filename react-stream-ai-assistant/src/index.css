@@ -176,4 +176,8 @@
     background: var(--str-chat__own-message-bubble-background);
     color: var(--str-chat__own-message-bubble-color);
   }
+
+  .str-chat__theme-dark .str-chat__channel-list-messenger {
+    background-color: hsl(var(--background));
+  }
 }

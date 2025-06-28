@@ -1,5 +1,16 @@
 import { useAIAgentStatus } from "@/hooks/use-ai-agent-status";
-import { Bot, Menu } from "lucide-react";
+import {
+  Bot,
+  Briefcase,
+  FileText,
+  Heart,
+  Lightbulb,
+  Menu,
+  MessageSquare,
+  Sparkles,
+  Target,
+  Users,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import {
   Channel,
@@ -13,7 +24,7 @@ import { AIAgentControl } from "./ai-agent-control";
 import { ChatInput, ChatInputProps } from "./chat-input";
 import ChatMessage from "./chat-message";
 import { Button } from "./ui/button";
-import { WritingPromptsToolbar } from "./writing-prompts-toolbar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface ChatInterfaceProps {
   onToggleSidebar: () => void;
@@ -25,13 +36,53 @@ const EmptyStateWithInput: React.FC<{
   onNewChatMessage: ChatInputProps["sendMessage"];
 }> = ({ onNewChatMessage }) => {
   const [inputText, setInputText] = useState("");
-  const writingPrompts = [
-    "Write a professional email to my boss",
-    "Help me brainstorm ideas for a new project",
-    "Improve this paragraph for clarity",
-    "Create an outline for a blog post about AI",
-    "Write a blog post about the future of work",
-    "Draft a proposal for a new marketing campaign",
+
+  // Research-based writing prompts organized by category
+  const writingCategories = [
+    {
+      id: "business",
+      icon: <Briefcase className="h-4 w-4" />,
+      title: "Business",
+      prompts: [
+        "Write a professional email to my boss about a project update",
+        "Draft a compelling LinkedIn post about a recent achievement",
+        "Create an executive summary for a quarterly business report",
+        "Write a persuasive proposal for a new marketing campaign",
+      ],
+    },
+    {
+      id: "content",
+      icon: <FileText className="h-4 w-4" />,
+      title: "Content",
+      prompts: [
+        "Write a blog post about emerging trends in my industry",
+        "Create engaging social media captions for a product launch",
+        "Draft a newsletter that drives customer engagement",
+        "Write compelling product descriptions that convert",
+      ],
+    },
+    {
+      id: "communication",
+      icon: <MessageSquare className="h-4 w-4" />,
+      title: "Communication",
+      prompts: [
+        "Rewrite this text to be more clear and concise",
+        "Improve the tone of this message to sound more professional",
+        "Create a presentation script that keeps audiences engaged",
+        "Write customer service responses that build trust",
+      ],
+    },
+    {
+      id: "creative",
+      icon: <Lightbulb className="h-4 w-4" />,
+      title: "Creative",
+      prompts: [
+        "Brainstorm innovative solutions for a common problem",
+        "Generate creative angles for a story or article",
+        "Develop character backstories for creative writing",
+        "Create compelling headlines that grab attention",
+      ],
+    },
   ];
 
   const handlePromptClick = (prompt: string) => {
@@ -39,100 +90,150 @@ const EmptyStateWithInput: React.FC<{
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex items-center justify-center overflow-y-auto">
-        <div className="text-center max-w-lg p-6">
-          <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <h2 className="mt-4 text-lg font-medium text-foreground">
-            Your AI Writing Assistant
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            I can help you write, edit, brainstorm, and improve any type of
-            content.
-          </p>
-          <div className="mt-4 text-xs text-muted-foreground/70 space-y-1">
-            <p>• Write articles, emails, stories, or any content</p>
-            <p>• Edit and improve existing text</p>
-            <p>• Brainstorm ideas and outlines</p>
-            <p>• Adapt tone and style for your audience</p>
+    <div className="flex flex-col h-full bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="flex-1 flex items-center justify-center overflow-y-auto p-6">
+        <div className="text-center max-w-3xl w-full">
+          {/* Hero Section */}
+          <div className="mb-6">
+            <div className="relative inline-flex items-center justify-center w-16 h-16 mb-4">
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl animate-pulse"></div>
+              <Bot className="h-8 w-8 text-primary relative z-10" />
+              <Sparkles className="h-4 w-4 text-primary/60 absolute -top-1 -right-1" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Your AI Writing Partner
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              From first drafts to final edits, I'm here to help you write
+              better, faster.
+            </p>
           </div>
 
-          {/* Writing Prompt Suggestions */}
-          <div className="mt-6">
-            <p className="text-xs font-medium text-muted-foreground mb-3">
-              Try these prompts:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {writingPrompts.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePromptClick(prompt)}
-                  className="p-3 text-left rounded-md bg-muted/30 hover:bg-muted/50 transition-colors border border-muted/50 hover:border-muted"
+          {/* Key Benefits */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
+              <Target className="h-4 w-4 text-primary mx-auto mb-1" />
+              <h3 className="font-medium text-xs mb-1">
+                Overcome Writer's Block
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Get unstuck with AI-powered prompts
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
+              <Users className="h-4 w-4 text-primary mx-auto mb-1" />
+              <h3 className="font-medium text-xs mb-1">Match Your Voice</h3>
+              <p className="text-xs text-muted-foreground">
+                Maintain your unique style
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
+              <Heart className="h-4 w-4 text-primary mx-auto mb-1" />
+              <h3 className="font-medium text-xs mb-1">Save Time</h3>
+              <p className="text-xs text-muted-foreground">Write 10x faster</p>
+            </div>
+          </div>
+
+          {/* Writing Prompt Categories - Tabbed Interface */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              What would you like to write today?
+            </h2>
+
+            <Tabs defaultValue="business" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                {writingCategories.map((category) => (
+                  <TabsTrigger
+                    key={category.id}
+                    value={category.id}
+                    className="flex items-center gap-1.5 text-xs"
+                  >
+                    {category.icon}
+                    <span className="hidden sm:inline">{category.title}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {writingCategories.map((category) => (
+                <TabsContent
+                  key={category.id}
+                  value={category.id}
+                  className="mt-4"
                 >
-                  {prompt}
-                </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {category.prompts.map((prompt, promptIndex) => (
+                      <button
+                        key={promptIndex}
+                        onClick={() => handlePromptClick(prompt)}
+                        className="p-3 text-left text-sm rounded-lg bg-muted/30 hover:bg-muted/50 transition-all duration-200 border border-muted/50 hover:border-muted group"
+                      >
+                        <span className="text-foreground group-hover:text-primary transition-colors">
+                          {prompt}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </TabsContent>
               ))}
+            </Tabs>
+          </div>
+
+          {/* Quick Tips */}
+          <div className="p-3 rounded-lg bg-muted/20 border border-muted/30">
+            <h3 className="font-medium text-xs mb-2 text-foreground">
+              💡 Pro Tips
+            </h3>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>• Be specific about your audience, tone, and goals</p>
+              <p>• Ask for multiple versions to find the perfect fit</p>
             </div>
           </div>
         </div>
       </div>
-      <div className="border-t bg-background">
-        <ChatInput
-          sendMessage={onNewChatMessage}
-          placeholder="Tell me what you'd like to write, or paste text to improve..."
-          value={inputText}
-          onValueChange={setInputText}
-          className="!p-4"
-        />
+
+      {/* Input Area */}
+      <div className="border-t bg-background/95 backdrop-blur-sm">
+        <div className="p-4">
+          <ChatInput
+            sendMessage={onNewChatMessage}
+            placeholder="Describe what you'd like to write, or paste text to improve..."
+            value={inputText}
+            onValueChange={setInputText}
+            className="!p-4"
+          />
+          <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
+            <span>Press Enter to send</span>
+            <span>•</span>
+            <span>Shift + Enter for new line</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-const ChannelMessageInput = () => {
-  const { sendMessage } = useChannelActionContext();
-  const [inputText, setInputText] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const handlePromptSelect = (prompt: string) => {
-    // Append the prompt to existing text or set it if empty
-    setInputText((prev) => (prev ? `${prev.trim()} ${prompt}` : prompt));
-    textareaRef.current?.focus();
-  };
-
-  return (
-    <div className="flex flex-col bg-background border-t">
-      <WritingPromptsToolbar onPromptSelect={handlePromptSelect} />
-      <ChatInput
-        sendMessage={sendMessage}
-        value={inputText}
-        onValueChange={setInputText}
-        textareaRef={textareaRef}
-        className="!p-4"
-      />
+const MessageListEmptyIndicator = () => (
+  <div className="h-full flex items-center justify-center">
+    <div className="text-center px-4">
+      <div className="relative inline-flex items-center justify-center w-12 h-12 mb-4">
+        <div className="absolute inset-0 bg-primary/10 rounded-xl"></div>
+        <Bot className="h-6 w-6 text-primary/80 relative z-10" />
+      </div>
+      <h2 className="text-lg font-medium text-foreground mb-2">
+        Ready to Write
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        Start the conversation and let's create something amazing together.
+      </p>
     </div>
-  );
-};
+  </div>
+);
 
 const MessageListContent = () => {
   const { messages, thread } = useChannelStateContext();
   const isThread = !!thread;
 
   if (isThread) return null;
-
-  const MessageListEmptyIndicator = () => (
-    <div className="h-full flex items-center justify-center">
-      <div className="text-center px-4">
-        <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
-        <h2 className="mt-4 text-lg font-medium text-foreground">
-          Ready to Write
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          There are no messages yet. Start the conversation!
-        </p>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex-1 min-h-0">
@@ -156,10 +257,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     backendUrl,
   });
 
+  const ChannelMessageInputComponent = () => {
+    const { sendMessage } = useChannelActionContext();
+    const [inputText, setInputText] = useState("");
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    return (
+      <ChatInput
+        sendMessage={sendMessage}
+        value={inputText}
+        onValueChange={setInputText}
+        textareaRef={textareaRef}
+        showPromptToolbar={true}
+        className="!p-4"
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b bg-background z-10">
+      {/* Enhanced Header */}
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -170,15 +288,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <Menu className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Bot className="h-4 w-4 text-primary-foreground" />
+            <div className="relative">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
+                <Bot className="h-4 w-4 text-primary-foreground" />
+              </div>
+              {channel?.id && agentStatus.status === "connected" && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+              )}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-foreground">
                 {channel?.data?.name || "New Writing Session"}
               </h2>
               <p className="text-xs text-muted-foreground">
-                AI Writing Assistant
+                AI Writing Assistant • Always improving
               </p>
             </div>
           </div>
@@ -203,7 +326,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <Channel channel={channel}>
             <Window>
               <MessageListContent />
-              <ChannelMessageInput />
+              <ChannelMessageInputComponent />
             </Window>
           </Channel>
         )}
