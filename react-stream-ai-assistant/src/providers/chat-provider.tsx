@@ -2,6 +2,7 @@ import { ReactNode, useCallback } from "react";
 import { User } from "stream-chat";
 import { Chat, useCreateChatClient } from "stream-chat-react";
 import { LoadingScreen } from "../components/loading-screen";
+import { useTheme } from "../hooks/use-theme";
 
 interface ChatProviderProps {
   user: User;
@@ -16,6 +17,8 @@ if (!apiKey) {
 }
 
 export const ChatProvider = ({ user, children }: ChatProviderProps) => {
+  const { theme } = useTheme();
+
   /**
    * Token provider function that fetches authentication tokens from our backend.
    * This is called automatically by the Stream Chat client when:
@@ -69,5 +72,14 @@ export const ChatProvider = ({ user, children }: ChatProviderProps) => {
     return <LoadingScreen />;
   }
 
-  return <Chat client={client}>{children}</Chat>;
+  return (
+    <Chat
+      client={client}
+      theme={
+        theme === "dark" ? "str-chat__theme-dark" : "str-chat__theme-light"
+      }
+    >
+      {children}
+    </Chat>
+  );
 };

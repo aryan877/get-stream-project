@@ -1,3 +1,5 @@
+@import "stream-chat-react/dist/css/v2/index.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,20 +9,20 @@
     overflow-y: hidden;
   }
   :root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 262 80% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -91,18 +93,54 @@
     color: hsl(var(--primary-foreground));
   }
 
+  .str-chat__theme-light {
+    --str-chat__primary-color: hsl(var(--primary));
+    --str-chat__primary-color-alpha-15: hsl(var(--primary) / 0.15);
+    --str-chat__active-primary-color: hsl(var(--primary));
+    --str-chat__surface-color: hsl(var(--background));
+    --str-chat__secondary-surface-color: hsl(var(--card));
+    --str-chat__tertiary-surface-color: hsl(var(--muted));
+    --str-chat__primary-surface-color: hsl(var(--primary) / 0.1);
+    --str-chat__primary-surface-color-low-emphasis: hsl(var(--primary) / 0.05);
+    --str-chat__border-radius-circle: 9999px;
+    --str-chat__border-radius-strong: calc(var(--radius) - 2px);
+    --str-chat__border-color: hsl(var(--border));
+    --str-chat__text-color: hsl(var(--foreground));
+    --str-chat__text-color-low-emphasis: hsl(var(--muted-foreground));
+    --str-chat__own-message-bubble-background: hsl(var(--primary));
+    --str-chat__own-message-bubble-color: hsl(var(--primary-foreground));
+    --str-chat__message-bubble-background: hsl(var(--muted));
+    --str-chat__message-bubble-color: hsl(var(--foreground));
+    --str-chat__input-background-color: hsl(var(--input));
+    --str-chat__avatar-background-color: hsl(var(--secondary));
+    --str-chat__avatar-text-color: hsl(var(--secondary-foreground));
+  }
+
+  .str-chat__theme-dark {
+    --str-chat__primary-color: hsl(var(--primary));
+    --str-chat__primary-color-alpha-15: hsl(var(--primary) / 0.15);
+    --str-chat__active-primary-color: hsl(var(--primary));
+    --str-chat__surface-color: hsl(var(--background));
+    --str-chat__secondary-surface-color: hsl(var(--card));
+    --str-chat__tertiary-surface-color: hsl(var(--muted));
+    --str-chat__primary-surface-color: hsl(var(--primary) / 0.2);
+    --str-chat__primary-surface-color-low-emphasis: hsl(var(--primary) / 0.1);
+    --str-chat__border-radius-circle: 9999px;
+    --str-chat__border-radius-strong: calc(var(--radius) - 2px);
+    --str-chat__border-color: hsl(var(--border));
+    --str-chat__text-color: hsl(var(--foreground));
+    --str-chat__text-color-low-emphasis: hsl(var(--muted-foreground));
+    --str-chat__own-message-bubble-background: hsl(var(--primary));
+    --str-chat__own-message-bubble-color: hsl(var(--primary-foreground));
+    --str-chat__message-bubble-background: hsl(var(--muted));
+    --str-chat__message-bubble-color: hsl(var(--foreground));
+    --str-chat__input-background-color: hsl(var(--input));
+    --str-chat__avatar-background-color: hsl(var(--secondary));
+    --str-chat__avatar-text-color: hsl(var(--secondary-foreground));
+  }
+
   /* Chat app specific styles */
-  .message-user {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-  }
-
-  .message-bot {
-    background: hsl(var(--muted));
-    color: hsl(var(--muted-foreground));
-    border: 1px solid hsl(var(--border));
-  }
-
+  /* These are now handled by the Stream theme, but we can keep them for overrides if needed */
   /* Animation for typing indicator */
   @keyframes typing-bounce {
     0%,
@@ -125,5 +163,17 @@
 
   .typing-dot:nth-child(3) {
     animation-delay: 0.4s;
+  }
+
+  /* Stream message bubble styling */
+  .str-chat__message-bubble {
+    background: var(--str-chat__message-bubble-background);
+    color: var(--str-chat__message-bubble-color);
+    border: 1px solid var(--str-chat__border-color);
+  }
+
+  .str-chat__message-bubble--me {
+    background: var(--str-chat__own-message-bubble-background);
+    color: var(--str-chat__own-message-bubble-color);
   }
 }

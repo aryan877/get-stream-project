@@ -84,8 +84,8 @@ const ChatMessage: React.FC = () => {
             className={cn(
               "px-4 py-3 rounded-2xl text-sm leading-relaxed transition-all duration-200",
               isUser
-                ? "bg-primary text-primary-foreground rounded-br-md message-user"
-                : "bg-muted text-muted-foreground rounded-bl-md message-bot"
+                ? "str-chat__message-bubble str-chat__message-bubble--me rounded-br-md"
+                : "str-chat__message-bubble rounded-bl-md"
             )}
           >
             {/* Message Text */}
@@ -101,25 +101,13 @@ const ChatMessage: React.FC = () => {
 
                     return isInline ? (
                       <code
-                        className={cn(
-                          "px-1.5 py-0.5 rounded text-xs font-mono",
-                          isUser
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-background/50 text-foreground"
-                        )}
+                        className="px-1.5 py-0.5 rounded text-xs font-mono bg-black/10 dark:bg-white/10"
                         {...rest}
                       >
                         {children}
                       </code>
                     ) : (
-                      <pre
-                        className={cn(
-                          "p-3 rounded-md overflow-x-auto my-2 text-xs font-mono",
-                          isUser
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-background/50 text-foreground"
-                        )}
-                      >
+                      <pre className="p-3 rounded-md overflow-x-auto my-2 text-xs font-mono bg-black/5 dark:bg-white/5">
                         <code {...rest}>{children}</code>
                       </pre>
                     );
@@ -138,14 +126,7 @@ const ChatMessage: React.FC = () => {
                     <li className="leading-relaxed">{children}</li>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote
-                      className={cn(
-                        "border-l-3 pl-3 my-2 italic",
-                        isUser
-                          ? "border-primary-foreground/30"
-                          : "border-muted-foreground/30"
-                      )}
-                    >
+                    <blockquote className="border-l-3 pl-3 my-2 italic border-current/30">
                       {children}
                     </blockquote>
                   ),

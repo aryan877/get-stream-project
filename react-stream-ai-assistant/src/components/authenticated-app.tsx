@@ -40,15 +40,16 @@ const ChannelListEmptyStateIndicator = () => (
     </div>
     <div className="space-y-2 max-w-xs">
       <h3 className="text-sm font-medium text-foreground">
-        No conversations yet
+        No writing sessions yet
       </h3>
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Start a new chat to begin conversing with your AI assistant.
+        Start a new writing session to begin creating content with your AI
+        assistant.
       </p>
     </div>
     <div className="mt-4 flex items-center gap-1 text-xs text-muted-foreground/60">
       <Plus className="h-3 w-3" />
-      <span>Click "New Chat" to get started</span>
+      <span>Click "New Writing Session" to get started</span>
     </div>
   </div>
 );
@@ -213,7 +214,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               <span className="flex-1 truncate text-sm font-medium">
-                {previewProps.channel.data?.name || "New Chat"}
+                {previewProps.channel.data?.name || "New Writing Session"}
               </span>
               <Button
                 variant="ghost"
@@ -223,7 +224,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
                   e.stopPropagation();
                   handleDeleteClick(previewProps.channel);
                 }}
-                title="Delete chat"
+                title="Delete writing session"
               >
                 <Trash2 className="h-4 w-4 text-muted-foreground/70 hover:text-destructive" />
               </Button>
@@ -243,10 +244,10 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+            <AlertDialogTitle>Delete Writing Session</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this chat? This action cannot be
-              undone and all messages will be permanently deleted.
+              Are you sure you want to delete this writing session? This action
+              cannot be undone and all content will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -257,7 +258,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              Delete Chat
+              Delete Session
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

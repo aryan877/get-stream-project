@@ -1,18 +1,19 @@
 import { useAIAgentStatus } from "@/hooks/use-ai-agent-status";
 import { Bot, Menu } from "lucide-react";
+import { useRef, useState } from "react";
 import {
   Channel,
   MessageList,
   useChannelActionContext,
   useChannelStateContext,
   useChatContext,
+  Window,
 } from "stream-chat-react";
 import { AIAgentControl } from "./ai-agent-control";
 import { ChatInput, ChatInputProps } from "./chat-input";
 import ChatMessage from "./chat-message";
-import { TypingIndicator } from "./typing-indicator";
 import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
+import { WritingPromptsToolbar } from "./writing-prompts-toolbar";
 
 interface ChatInterfaceProps {
   onToggleSidebar: () => void;
@@ -20,78 +21,126 @@ interface ChatInterfaceProps {
   backendUrl: string;
 }
 
-const MessageListEmptyStateIndicator = () => (
-  <div
-    className="absolute inset-0 flex items-center justify-center"
-    style={{ bottom: "var(--message-input-height, 76px)" }}
-  >
-    <div className="text-center px-4">
-      <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
-      <h2 className="mt-4 text-lg font-medium text-foreground">
-        No Messages Yet
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Be the first one to send a message!
-      </p>
-    </div>
-  </div>
-);
-
 const EmptyStateWithInput: React.FC<{
   onNewChatMessage: ChatInputProps["sendMessage"];
-}> = ({ onNewChatMessage }) => (
-  <div className="flex flex-col h-full">
-    <div className="flex-1 flex items-center justify-center">
-      <div className="text-center">
-        <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
-        <h2 className="mt-4 text-lg font-medium text-foreground">
-          Your AI Assistant
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Start a conversation by typing your message below.
-        </p>
+}> = ({ onNewChatMessage }) => {
+  const [inputText, setInputText] = useState("");
+  const writingPrompts = [
+    "Write a professional email to my boss",
+    "Help me brainstorm ideas for a new project",
+    "Improve this paragraph for clarity",
+    "Create an outline for a blog post about AI",
+    "Write a blog post about the future of work",
+    "Draft a proposal for a new marketing campaign",
+  ];
+
+  const handlePromptClick = (prompt: string) => {
+    setInputText(prompt);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 flex items-center justify-center overflow-y-auto">
+        <div className="text-center max-w-lg p-6">
+          <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
+          <h2 className="mt-4 text-lg font-medium text-foreground">
+            Your AI Writing Assistant
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            I can help you write, edit, brainstorm, and improve any type of
+            content.
+          </p>
+          <div className="mt-4 text-xs text-muted-foreground/70 space-y-1">
+            <p>• Write articles, emails, stories, or any content</p>
+            <p>• Edit and improve existing text</p>
+            <p>• Brainstorm ideas and outlines</p>
+            <p>• Adapt tone and style for your audience</p>
+          </div>
+
+          {/* Writing Prompt Suggestions */}
+          <div className="mt-6">
+            <p className="text-xs font-medium text-muted-foreground mb-3">
+              Try these prompts:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              {writingPrompts.map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => handlePromptClick(prompt)}
+                  className="p-3 text-left rounded-md bg-muted/30 hover:bg-muted/50 transition-colors border border-muted/50 hover:border-muted"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="border-t bg-background">
+        <ChatInput
+          sendMessage={onNewChatMessage}
+          placeholder="Tell me what you'd like to write, or paste text to improve..."
+          value={inputText}
+          onValueChange={setInputText}
+          className="!p-4"
+        />
       </div>
     </div>
-    <div className="p-4 border-t">
-      <ChatInput
-        sendMessage={onNewChatMessage}
-        placeholder="Start a new chat with the AI assistant..."
-      />
-    </div>
-  </div>
-);
+  );
+};
 
 const ChannelMessageInput = () => {
   const { sendMessage } = useChannelActionContext();
-  return <ChatInput sendMessage={sendMessage} />;
-};
+  const [inputText, setInputText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-// Component to check if channel has messages and show appropriate content
-const ChannelMessageContent = () => {
-  const { messages } = useChannelStateContext();
-
-  // Check if there are no messages (empty channel)
-  if (!messages || messages.length === 0) {
-    return <MessageListEmptyStateIndicator />;
-  }
+  const handlePromptSelect = (prompt: string) => {
+    // Append the prompt to existing text or set it if empty
+    setInputText((prev) => (prev ? `${prev.trim()} ${prompt}` : prompt));
+    textareaRef.current?.focus();
+  };
 
   return (
-    <div
-      className="absolute inset-0"
-      style={{ bottom: "var(--message-input-height, 76px)" }}
-    >
-      <ScrollArea className="h-full">
-        <div className="pt-4 pb-4">
-          <MessageList
-            Message={ChatMessage}
-            hideDeletedMessages={true}
-            disableDateSeparator={true}
-          />
-          <div className="px-4 pb-2">
-            <TypingIndicator />
-          </div>
-        </div>
-      </ScrollArea>
+    <div className="flex flex-col bg-background border-t">
+      <WritingPromptsToolbar onPromptSelect={handlePromptSelect} />
+      <ChatInput
+        sendMessage={sendMessage}
+        value={inputText}
+        onValueChange={setInputText}
+        textareaRef={textareaRef}
+        className="!p-4"
+      />
+    </div>
+  );
+};
+
+const MessageListContent = () => {
+  const { messages, thread } = useChannelStateContext();
+  const isThread = !!thread;
+
+  if (isThread) return null;
+
+  const MessageListEmptyIndicator = () => (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center px-4">
+        <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
+        <h2 className="mt-4 text-lg font-medium text-foreground">
+          Ready to Write
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          There are no messages yet. Start the conversation!
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex-1 min-h-0">
+      {!messages?.length ? (
+        <MessageListEmptyIndicator />
+      ) : (
+        <MessageList Message={ChatMessage} />
+      )}
     </div>
   );
 };
@@ -126,9 +175,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-foreground">
-                {channel?.data?.name || "New Chat"}
+                {channel?.data?.name || "New Writing Session"}
               </h2>
-              <p className="text-xs text-muted-foreground">Writing Assistant</p>
+              <p className="text-xs text-muted-foreground">
+                AI Writing Assistant
+              </p>
             </div>
           </div>
         </div>
@@ -145,18 +196,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 relative">
+      <div className="flex-1 flex flex-col min-h-0">
         {!channel ? (
           <EmptyStateWithInput onNewChatMessage={onNewChatMessage} />
         ) : (
           <Channel channel={channel}>
-            <ChannelMessageContent />
-            <div
-              className="absolute bottom-0 left-0 right-0 border-t bg-background z-10"
-              style={{ height: "var(--message-input-height, 76px)" }}
-            >
+            <Window>
+              <MessageListContent />
               <ChannelMessageInput />
-            </div>
+            </Window>
           </Channel>
         )}
       </div>

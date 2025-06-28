@@ -29,7 +29,7 @@ setInterval(async () => {
 
 app.get("/", (req, res) => {
   res.json({
-    message: "GetStream AI Server is running",
+    message: "AI Writing Assistant Server is running",
     apiKey: apiKey,
     activeAgents: aiAgentCache.size,
   });
@@ -57,7 +57,7 @@ app.post("/start-ai-agent", async (req, res) => {
 
       await serverClient.upsertUser({
         id: user_id,
-        name: "AI Assistant",
+        name: "AI Writing Assistant",
       });
 
       const channel = serverClient.channel(channel_type, channel_id);
