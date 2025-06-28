@@ -4,11 +4,12 @@ import {
   Channel,
   MessageList,
   useChannelActionContext,
+  useChannelStateContext,
   useChatContext,
 } from "stream-chat-react";
 import { AIAgentControl } from "./ai-agent-control";
 import { ChatInput, ChatInputProps } from "./chat-input";
-import ChatMessage, { MessageListEmptyStateIndicator } from "./chat-message";
+import ChatMessage from "./chat-message";
 import { TypingIndicator } from "./typing-indicator";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -18,6 +19,23 @@ interface ChatInterfaceProps {
   onNewChatMessage: (message: { text: string }) => Promise<void>;
   backendUrl: string;
 }
+
+const MessageListEmptyStateIndicator = () => (
+  <div
+    className="absolute inset-0 flex items-center justify-center"
+    style={{ bottom: "var(--message-input-height, 76px)" }}
+  >
+    <div className="text-center px-4">
+      <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
+      <h2 className="mt-4 text-lg font-medium text-foreground">
+        No Messages Yet
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Be the first one to send a message!
+      </p>
+    </div>
+  </div>
+);
 
 const EmptyStateWithInput: React.FC<{
   onNewChatMessage: ChatInputProps["sendMessage"];
@@ -46,6 +64,36 @@ const EmptyStateWithInput: React.FC<{
 const ChannelMessageInput = () => {
   const { sendMessage } = useChannelActionContext();
   return <ChatInput sendMessage={sendMessage} />;
+};
+
+// Component to check if channel has messages and show appropriate content
+const ChannelMessageContent = () => {
+  const { messages } = useChannelStateContext();
+
+  // Check if there are no messages (empty channel)
+  if (!messages || messages.length === 0) {
+    return <MessageListEmptyStateIndicator />;
+  }
+
+  return (
+    <div
+      className="absolute inset-0"
+      style={{ bottom: "var(--message-input-height, 76px)" }}
+    >
+      <ScrollArea className="h-full">
+        <div className="pt-4 pb-4">
+          <MessageList
+            Message={ChatMessage}
+            hideDeletedMessages={true}
+            disableDateSeparator={true}
+          />
+          <div className="px-4 pb-2">
+            <TypingIndicator />
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
 };
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -102,27 +150,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <EmptyStateWithInput onNewChatMessage={onNewChatMessage} />
         ) : (
           <Channel channel={channel}>
-            {channel.data?.member_count === 1 ? (
-              <MessageListEmptyStateIndicator />
-            ) : (
-              <div
-                className="absolute inset-0"
-                style={{ bottom: "var(--message-input-height, 76px)" }}
-              >
-                <ScrollArea className="h-full">
-                  <div className="pt-4 pb-4">
-                    <MessageList
-                      Message={ChatMessage}
-                      hideDeletedMessages={true}
-                      disableDateSeparator={true}
-                    />
-                    <div className="px-4 pb-2">
-                      <TypingIndicator />
-                    </div>
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
+            <ChannelMessageContent />
             <div
               className="absolute bottom-0 left-0 right-0 border-t bg-background z-10"
               style={{ height: "var(--message-input-height, 76px)" }}

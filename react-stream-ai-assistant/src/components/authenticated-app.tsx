@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   Loader2,
@@ -8,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChannelFilters, ChannelSort, User } from "stream-chat";
+import { Channel, ChannelFilters, ChannelSort, User } from "stream-chat";
 import { ChannelList, useChatContext } from "stream-chat-react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatProvider } from "../providers/chat-provider";
@@ -51,6 +61,8 @@ export const AuthenticatedApp = ({ user, onLogout }: AuthenticatedAppProps) => (
 
 const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
   const { client, setActiveChannel } = useChatContext();
   const navigate = useNavigate();
   const { channelId } = useParams<{ channelId: string }>();
@@ -127,6 +139,31 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
     setSidebarOpen(false);
   };
 
+  const handleDeleteClick = (channel: Channel) => {
+    setChannelToDelete(channel);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (channelToDelete) {
+      try {
+        if (channelId === channelToDelete.id) {
+          navigate("/");
+        }
+        await channelToDelete.delete();
+      } catch (error) {
+        console.error("Error deleting channel:", error);
+      }
+    }
+    setShowDeleteDialog(false);
+    setChannelToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
+    setChannelToDelete(null);
+  };
+
   if (!client) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -184,11 +221,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
                 className="absolute right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={async (e) => {
                   e.stopPropagation();
-                  const channelToDelete = previewProps.channel;
-                  if (channelId === channelToDelete.id) {
-                    navigate("/");
-                  }
-                  await channelToDelete.delete();
+                  handleDeleteClick(previewProps.channel);
                 }}
                 title="Delete chat"
               >
@@ -205,6 +238,30 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
           backendUrl={backendUrl}
         />
       </div>
+
+      {/* Delete Chat Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this chat? This action cannot be
+              undone and all messages will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Chat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

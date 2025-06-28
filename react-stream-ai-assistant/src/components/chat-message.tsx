@@ -3,26 +3,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Bot, Check, Copy } from "lucide-react";
 import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   useAIState,
   useChannelStateContext,
   useMessageContext,
   useMessageTextStreaming,
 } from "stream-chat-react";
-
-export const MessageListEmptyStateIndicator = () => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div className="text-center">
-      <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
-      <h2 className="mt-4 text-lg font-medium text-foreground">
-        No Messages Yet
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Be the first one to send a message!
-      </p>
-    </div>
-  </div>
-);
 
 const ChatMessage: React.FC = () => {
   const { message } = useMessageContext();
@@ -102,8 +89,89 @@ const ChatMessage: React.FC = () => {
             )}
           >
             {/* Message Text */}
-            <div className="whitespace-pre-wrap break-words">
-              {streamedMessageText || message.text}
+            <div className="break-words">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => (
+                    <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>
+                  ),
+                  code: ({ children, ...props }) => {
+                    const { node, ...rest } = props;
+                    const isInline = !rest.className?.includes("language-");
+
+                    return isInline ? (
+                      <code
+                        className={cn(
+                          "px-1.5 py-0.5 rounded text-xs font-mono",
+                          isUser
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-background/50 text-foreground"
+                        )}
+                        {...rest}
+                      >
+                        {children}
+                      </code>
+                    ) : (
+                      <pre
+                        className={cn(
+                          "p-3 rounded-md overflow-x-auto my-2 text-xs font-mono",
+                          isUser
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-background/50 text-foreground"
+                        )}
+                      >
+                        <code {...rest}>{children}</code>
+                      </pre>
+                    );
+                  },
+                  ul: ({ children }) => (
+                    <ul className="list-disc ml-4 mb-3 space-y-1">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal ml-4 mb-3 space-y-1">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="leading-relaxed">{children}</li>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote
+                      className={cn(
+                        "border-l-3 pl-3 my-2 italic",
+                        isUser
+                          ? "border-primary-foreground/30"
+                          : "border-muted-foreground/30"
+                      )}
+                    >
+                      {children}
+                    </blockquote>
+                  ),
+                  h1: ({ children }) => (
+                    <h1 className="text-lg font-semibold mb-2 mt-4 first:mt-0">
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-base font-semibold mb-2 mt-3 first:mt-0">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-sm font-semibold mb-2 mt-3 first:mt-0">
+                      {children}
+                    </h3>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold">{children}</strong>
+                  ),
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                }}
+              >
+                {streamedMessageText || message.text || ""}
+              </ReactMarkdown>
             </div>
 
             {/* Loading State */}
