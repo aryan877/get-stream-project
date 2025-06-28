@@ -108,7 +108,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b bg-background z-10">
         <div className="flex items-center gap-3">

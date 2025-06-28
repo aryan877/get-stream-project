@@ -183,7 +183,7 @@ const AuthenticatedCore = ({ user, onLogout }: AuthenticatedAppProps) => {
   const options = { state: true, presence: true, limit: 10 };
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-full w-full">
       <ChatSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
