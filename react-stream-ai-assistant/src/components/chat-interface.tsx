@@ -161,6 +161,8 @@ const EmptyStateWithInput: React.FC<{
             value={inputText}
             onValueChange={setInputText}
             className="!p-4"
+            isGenerating={false}
+            onStopGenerating={() => {}}
           />
           <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
             <span>Press Enter to send</span>
@@ -220,8 +222,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const ChannelMessageInputComponent = () => {
     const { sendMessage } = useChannelActionContext();
+    const { messages, channel } = useChannelStateContext();
     const [inputText, setInputText] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const isGenerating = messages.some((m) => m.generating && !!m.text?.length);
+
+    const handleStopGenerating = () => {
+      if (channel) {
+        channel.sendEvent({
+          type: "ai_indicator.stop",
+          cid: channel.cid,
+          message_id: messages.find((m) => m.generating)?.id,
+        });
+      }
+    };
 
     return (
       <ChatInput
@@ -231,6 +246,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         textareaRef={textareaRef}
         showPromptToolbar={true}
         className="!p-4"
+        isGenerating={isGenerating}
+        onStopGenerating={handleStopGenerating}
       />
     );
   };

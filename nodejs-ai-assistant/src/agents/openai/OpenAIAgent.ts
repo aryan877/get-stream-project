@@ -126,9 +126,16 @@ Remember: You're here to make writing easier and more effective. Be direct, crea
       run,
       this.chatClient,
       this.channel,
-      channelMessage
+      channelMessage,
+      () => this.removeHandler(handler)
     );
-    void handler.run();
     this.handlers.push(handler);
+    void handler.run();
+  };
+
+  private removeHandler = (handlerToRemove: OpenAIResponseHandler) => {
+    this.handlers = this.handlers.filter(
+      (handler) => handler !== handlerToRemove
+    );
   };
 }

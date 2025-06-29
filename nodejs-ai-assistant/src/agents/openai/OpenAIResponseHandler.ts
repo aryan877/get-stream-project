@@ -1,11 +1,12 @@
 import OpenAI from "openai";
 import type { AssistantStream } from "openai/lib/AssistantStream";
-import type { Channel, MessageResponse, StreamChat } from "stream-chat";
+import type { Channel, Event, MessageResponse, StreamChat } from "stream-chat";
 
 export class OpenAIResponseHandler {
   private message_text = "";
   private chunk_counter = 0;
   private run_id = "";
+  private is_done = false;
 
   constructor(
     private readonly openai: OpenAI,
@@ -13,29 +14,67 @@ export class OpenAIResponseHandler {
     private readonly assistantStream: AssistantStream,
     private readonly chatClient: StreamChat,
     private readonly channel: Channel,
-    private readonly message: MessageResponse
+    private readonly message: MessageResponse,
+    private readonly onDispose: () => void
   ) {
     this.chatClient.on("ai_indicator.stop", this.handleStopGenerating);
   }
 
   run = async () => {
     for await (const event of this.assistantStream) {
+      if (this.is_done) {
+        break;
+      }
       await this.handle(event);
     }
+    await this.dispose();
   };
 
-  dispose = () => {
+  dispose = async () => {
+    if (this.is_done) {
+      return;
+    }
+    this.is_done = true;
     this.chatClient.off("ai_indicator.stop", this.handleStopGenerating);
+    try {
+      const channelState = await this.channel.query();
+      const message = channelState.messages.find(
+        (m) => m.id === this.message.id
+      );
+
+      if (message && message.generating) {
+        console.log(
+          `Message ${this.message.id} is still generating, updating status`
+        );
+        await this.chatClient.partialUpdateMessage(this.message.id, {
+          set: { generating: false },
+        });
+      }
+    } catch (e) {
+      console.error("Error updating message on dispose", e);
+    }
+    this.onDispose();
   };
 
-  private handleStopGenerating = async () => {
-    console.log("Stop generating");
-    if (!this.openai || !this.openAiThread) {
-      console.log("OpenAI not initialized");
+  private handleStopGenerating = async (event: Event) => {
+    if (this.is_done || event.message_id !== this.message.id) {
       return;
     }
 
-    this.openai.beta.threads.runs.cancel(this.openAiThread.id, this.run_id);
+    console.log("Stop generating for message", this.message.id);
+    if (!this.openai || !this.openAiThread || !this.run_id) {
+      return;
+    }
+
+    try {
+      await this.openai.beta.threads.runs.cancel(
+        this.openAiThread.id,
+        this.run_id
+      );
+    } catch (e) {
+      console.error("Error cancelling run", e);
+    }
+
     await this.chatClient.partialUpdateMessage(this.message.id, {
       set: { generating: false },
     });
@@ -44,6 +83,7 @@ export class OpenAIResponseHandler {
       cid: this.message.cid,
       message_id: this.message.id,
     });
+    await this.dispose();
   };
 
   private handle = async (
@@ -104,6 +144,7 @@ export class OpenAIResponseHandler {
             cid: cid,
             message_id: id,
           });
+          await this.dispose();
           break;
         case "thread.run.step.created":
           this.run_id = event.data.id;
@@ -118,11 +159,14 @@ export class OpenAIResponseHandler {
       }
     } catch (error) {
       console.error("Error handling event:", error);
-      this.handleError(error as Error);
+      await this.handleError(error as Error);
     }
   };
 
   private handleError = async (error: Error) => {
+    if (this.is_done) {
+      return;
+    }
     await this.channel.sendEvent({
       type: "ai_indicator.update",
       ai_state: "AI_STATE_ERROR",
@@ -136,5 +180,6 @@ export class OpenAIResponseHandler {
         generating: false,
       },
     });
+    await this.dispose();
   };
 }

@@ -1,14 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, Square, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { WritingPromptsToolbar } from "./writing-prompts-toolbar";
 
 export interface ChatInputProps {
   className?: string;
   sendMessage: (message: { text: string }) => Promise<void> | void;
-  disabled?: boolean;
+  isGenerating?: boolean;
+  onStopGenerating?: () => void;
   placeholder?: string;
   value: string;
   onValueChange: (text: string) => void;
@@ -19,7 +20,8 @@ export interface ChatInputProps {
 export const ChatInput: React.FC<ChatInputProps> = ({
   className,
   sendMessage,
-  disabled,
+  isGenerating,
+  onStopGenerating,
   placeholder = "Ask me to write something, or paste text to improve...",
   value,
   onValueChange,
@@ -55,7 +57,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value.trim() || isLoading || !sendMessage) return;
+    if (!value.trim() || isLoading || isGenerating || !sendMessage) return;
 
     setIsLoading(true);
     try {
@@ -105,11 +107,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 "border-input focus:border-primary/50 rounded-lg",
                 "transition-colors duration-200 bg-background"
               )}
-              disabled={isLoading || disabled}
+              disabled={isLoading || isGenerating}
             />
 
             {/* Clear button */}
-            {value.trim() && !isLoading && (
+            {value.trim() && !isLoading && !isGenerating && (
               <Button
                 type="button"
                 variant="ghost"
@@ -122,20 +124,32 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               </Button>
             )}
 
-            {/* Send Button inside textarea */}
-            <Button
-              type="submit"
-              disabled={!value.trim() || isLoading || disabled}
-              className={cn(
-                "absolute right-2 bottom-2 h-8 w-8 rounded-md flex-shrink-0 p-0",
-                "transition-all duration-200",
-                "disabled:opacity-30 disabled:cursor-not-allowed",
-                !value.trim() ? "bg-muted hover:bg-muted" : ""
-              )}
-              variant={value.trim() ? "default" : "ghost"}
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            {/* Send/Stop Button inside textarea */}
+            {isGenerating ? (
+              <Button
+                type="button"
+                onClick={onStopGenerating}
+                className="absolute right-2 bottom-2 h-8 w-8 rounded-md flex-shrink-0 p-0"
+                variant="destructive"
+                title="Stop generating"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={!value.trim() || isLoading || isGenerating}
+                className={cn(
+                  "absolute right-2 bottom-2 h-8 w-8 rounded-md flex-shrink-0 p-0",
+                  "transition-all duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed",
+                  !value.trim() ? "bg-muted hover:bg-muted" : ""
+                )}
+                variant={value.trim() ? "default" : "ghost"}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </form>
       </div>
