@@ -3,13 +3,10 @@ import {
   Bot,
   Briefcase,
   FileText,
-  Heart,
   Lightbulb,
   Menu,
   MessageSquare,
   Sparkles,
-  Target,
-  Users,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import {
@@ -109,31 +106,6 @@ const EmptyStateWithInput: React.FC<{
             </p>
           </div>
 
-          {/* Key Benefits */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
-              <Target className="h-4 w-4 text-primary mx-auto mb-1" />
-              <h3 className="font-medium text-xs mb-1">
-                Overcome Writer's Block
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Get unstuck with AI-powered prompts
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
-              <Users className="h-4 w-4 text-primary mx-auto mb-1" />
-              <h3 className="font-medium text-xs mb-1">Match Your Voice</h3>
-              <p className="text-xs text-muted-foreground">
-                Maintain your unique style
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-card border border-border/50 hover:border-border transition-colors">
-              <Heart className="h-4 w-4 text-primary mx-auto mb-1" />
-              <h3 className="font-medium text-xs mb-1">Save Time</h3>
-              <p className="text-xs text-muted-foreground">Write 10x faster</p>
-            </div>
-          </div>
-
           {/* Writing Prompt Categories - Tabbed Interface */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">
@@ -176,17 +148,6 @@ const EmptyStateWithInput: React.FC<{
                 </TabsContent>
               ))}
             </Tabs>
-          </div>
-
-          {/* Quick Tips */}
-          <div className="p-3 rounded-lg bg-muted/20 border border-muted/30">
-            <h3 className="font-medium text-xs mb-2 text-foreground">
-              💡 Pro Tips
-            </h3>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>• Be specific about your audience, tone, and goals</p>
-              <p>• Ask for multiple versions to find the perfect fit</p>
-            </div>
           </div>
         </div>
       </div>
