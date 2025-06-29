@@ -156,20 +156,18 @@ const ChatMessage: React.FC = () => {
             </div>
 
             {/* Loading State */}
-            {(message.generating || aiState) &&
-              !streamedMessageText &&
-              !message.text && (
-                <div className="flex items-center gap-2 mt-2 pt-2">
-                  <span className="text-xs opacity-70">
-                    {getAiStateMessage()}
-                  </span>
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
-                    <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
-                    <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
-                  </div>
+            {aiState && !streamedMessageText && !message.text && (
+              <div className="flex items-center gap-2 mt-2 pt-2">
+                <span className="text-xs opacity-70">
+                  {getAiStateMessage()}
+                </span>
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
+                  <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
+                  <div className="w-1 h-1 bg-current rounded-full typing-dot opacity-70"></div>
                 </div>
-              )}
+              </div>
+            )}
           </div>
 
           {/* Timestamp and Actions */}

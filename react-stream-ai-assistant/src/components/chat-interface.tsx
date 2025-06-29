@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import {
   Channel,
   MessageList,
+  useAIState,
   useChannelActionContext,
   useChannelStateContext,
   useChatContext,
@@ -222,20 +223,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const ChannelMessageInputComponent = () => {
     const { sendMessage } = useChannelActionContext();
-    const { messages, channel } = useChannelStateContext();
+    const { channel, messages } = useChannelStateContext();
+    const { aiState } = useAIState(channel);
     const [inputText, setInputText] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const isGenerating = messages.some((m) => m.generating);
+    const isGenerating =
+      aiState === "AI_STATE_THINKING" ||
+      aiState === "AI_STATE_GENERATING" ||
+      aiState === "AI_STATE_EXTERNAL_SOURCES";
+
+    console.log("aiState", aiState);
 
     const handleStopGenerating = () => {
       if (channel) {
-        const generatingMessage = messages.find((m) => m.generating);
-        if (generatingMessage) {
+        const aiMessage = [...messages]
+          .reverse()
+          .find((m) => m.user?.id.startsWith("ai-bot"));
+        if (aiMessage) {
           channel.sendEvent({
             type: "ai_indicator.stop",
             cid: channel.cid,
-            message_id: generatingMessage.id,
+            message_id: aiMessage.id,
           });
         }
       }

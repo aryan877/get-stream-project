@@ -90,6 +90,8 @@ export class OpenAIAgent implements AIAgent {
 **Response Format:**
 - Be direct and production-ready.
 - Use clear formatting.
+- Never begin responses with phrases like "Here's the edit:", "Here are the changes:", or similar introductory statements.
+- Provide responses directly and professionally without unnecessary preambles.
 
 **Writing Context**: ${context || "General writing assistance."}
 
@@ -124,7 +126,6 @@ Your goal is to provide accurate, current, and helpful written content. Failure 
     const { message: channelMessage } = await this.channel.sendMessage({
       text: "",
       ai_generated: true,
-      generating: true,
     });
 
     await this.channel.sendEvent({
@@ -138,7 +139,6 @@ Your goal is to provide accurate, current, and helpful written content. Failure 
       this.openAiThread.id,
       {
         assistant_id: this.assistant.id,
-        instructions: instructions,
       }
     );
 
