@@ -93,6 +93,12 @@
     color: hsl(var(--primary-foreground));
   }
 
+  /* Selection styling for user messages - use a contrasting color */
+  .str-chat__message-bubble--me ::selection {
+    background-color: hsl(var(--background) / 0.8);
+    color: hsl(var(--foreground));
+  }
+
   .str-chat__theme-light {
     --str-chat__primary-color: hsl(var(--primary));
     --str-chat__primary-color-alpha-15: hsl(var(--primary) / 0.15);
