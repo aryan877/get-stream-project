@@ -16,6 +16,7 @@ const pendingAiAgents = new Set<string>();
 
 // TODO: temporary set to 8 hours, should be cleaned up at some point
 const inactivityThreshold = 480 * 60 * 1000;
+// Periodically check for inactive AI agents and dispose of them
 setInterval(async () => {
   const now = Date.now();
   for (const [userId, aiAgent] of aiAgentCache) {
@@ -51,6 +52,7 @@ app.post("/start-ai-agent", async (req, res) => {
   const user_id = `ai-bot-${channel_id.replace(/[!]/g, "")}`;
 
   try {
+    // Prevent multiple agents from being created for the same channel simultaneously
     if (!aiAgentCache.has(user_id) && !pendingAiAgents.has(user_id)) {
       console.log(`[API] Creating new agent for ${user_id}`);
       pendingAiAgents.add(user_id);
@@ -71,11 +73,12 @@ app.post("/start-ai-agent", async (req, res) => {
       );
 
       await agent.init();
+      // Final check to prevent race conditions where an agent might have been added
+      // while this one was initializing.
       if (aiAgentCache.has(user_id)) {
         await agent.dispose();
       } else {
         aiAgentCache.set(user_id, agent);
-        console.log(`[API] Agent for ${user_id} created and cached.`);
       }
     } else {
       console.log(`AI Agent ${user_id} already started or is pending.`);
@@ -99,16 +102,13 @@ app.post("/start-ai-agent", async (req, res) => {
 app.post("/stop-ai-agent", async (req, res) => {
   const { channel_id } = req.body;
   console.log(`[API] /stop-ai-agent called for channel: ${channel_id}`);
+  const user_id = `ai-bot-${channel_id.replace(/[!]/g, "")}`;
   try {
-    const user_id = `ai-bot-${channel_id.replace(/[!]/g, "")}`;
     const aiAgent = aiAgentCache.get(user_id);
     if (aiAgent) {
       console.log(`[API] Disposing agent for ${user_id}`);
       await disposeAiAgent(aiAgent);
       aiAgentCache.delete(user_id);
-      console.log(
-        `[API] Agent for ${user_id} disposed and removed from cache.`
-      );
     } else {
       console.log(`[API] Agent for ${user_id} not found in cache.`);
     }

@@ -41,7 +41,27 @@ export class OpenAIAgent implements AIAgent {
       name: "AI Writing Assistant",
       instructions: this.getWritingAssistantPrompt(),
       model: "gpt-4o",
-      tools: [{ type: "code_interpreter" }],
+      tools: [
+        { type: "code_interpreter" },
+        {
+          type: "function",
+          function: {
+            name: "web_search",
+            description:
+              "Search the web for current information, news, facts, or research on any topic",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description: "The search query to find information about",
+                },
+              },
+              required: ["query"],
+            },
+          },
+        },
+      ],
       temperature: 0.7,
     });
     this.openAiThread = await this.openai.beta.threads.create();
@@ -50,30 +70,30 @@ export class OpenAIAgent implements AIAgent {
   };
 
   private getWritingAssistantPrompt = (context?: string): string => {
-    return `You are an expert AI Writing Assistant designed to help users create, improve, and refine all types of written content. Your primary purpose is to be a collaborative writing partner.
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    return `You are an expert AI Writing Assistant. Your primary purpose is to be a collaborative writing partner.
 
 **Your Core Capabilities:**
-• **Content Creation**: Write articles, blogs, essays, stories, emails, proposals, reports, and any other text
-• **Content Improvement**: Edit, revise, and enhance existing text for clarity, flow, and impact  
-• **Style Adaptation**: Adjust tone, voice, and style for different audiences and purposes
-• **Brainstorming**: Generate ideas, outlines, headlines, and creative concepts
-• **Writing Coaching**: Provide feedback and suggestions to improve writing skills
+- Content Creation, Improvement, Style Adaptation, Brainstorming, and Writing Coaching.
+- **Web Search**: You have the ability to search the web for up-to-date information using the 'web_search' tool.
+- **Current Date**: Today's date is ${currentDate}. Please use this for any time-sensitive queries.
 
-**How You Operate:**
-1. **Write First, Explain Second**: When asked to write something, generate the content directly rather than just explaining how to write it
-2. **Be Production-Ready**: Your output should be polished and ready to use
-3. **Match the Request**: Pay close attention to specified tone, length, format, and audience
-4. **Offer Variants**: When helpful, provide alternative versions or approaches
-5. **Be Constructive**: When editing or reviewing, focus on specific improvements
+**Crucial Instructions:**
+1.  **ALWAYS use the 'web_search' tool when the user asks for current information, news, or facts.** Your internal knowledge is outdated.
+2.  When you use the 'web_search' tool, you will receive a JSON object with search results. **You MUST base your response on the information provided in that search result.** Do not rely on your pre-existing knowledge for topics that require current information.
+3.  Synthesize the information from the web search to provide a comprehensive and accurate answer. Cite sources if the results include URLs.
 
 **Response Format:**
-- Lead with the requested content
-- Follow with brief, actionable suggestions when relevant
-- Use clear formatting and structure
+- Be direct and production-ready.
+- Use clear formatting.
 
-**Writing Context**: ${context || "General writing assistance - ready to help with any writing task"}
+**Writing Context**: ${context || "General writing assistance."}
 
-Remember: You're here to make writing easier and more effective. Be direct, creative, and helpful in every response.`;
+Your goal is to provide accurate, current, and helpful written content. Failure to use web search for recent topics will result in an incorrect answer.`;
   };
 
   private handleMessage = async (e: Event<DefaultGenerics>) => {
@@ -83,7 +103,6 @@ Remember: You're here to make writing easier and more effective. Be direct, crea
     }
 
     if (!e.message || e.message.ai_generated) {
-      console.log("Skip handling ai generated message");
       return;
     }
 
@@ -115,10 +134,13 @@ Remember: You're here to make writing easier and more effective. Be direct, crea
       message_id: channelMessage.id,
     });
 
-    const run = this.openai.beta.threads.runs.stream(this.openAiThread.id, {
-      assistant_id: this.assistant.id,
-      instructions: instructions,
-    });
+    const run = this.openai.beta.threads.runs.createAndStream(
+      this.openAiThread.id,
+      {
+        assistant_id: this.assistant.id,
+        instructions: instructions,
+      }
+    );
 
     const handler = new OpenAIResponseHandler(
       this.openai,

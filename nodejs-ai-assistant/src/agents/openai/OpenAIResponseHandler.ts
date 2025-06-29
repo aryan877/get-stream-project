@@ -21,12 +21,7 @@ export class OpenAIResponseHandler {
   }
 
   run = async () => {
-    for await (const event of this.assistantStream) {
-      if (this.is_done) {
-        break;
-      }
-      await this.handle(event);
-    }
+    await this.observeStream(this.assistantStream);
     await this.dispose();
   };
 
@@ -37,21 +32,11 @@ export class OpenAIResponseHandler {
     this.is_done = true;
     this.chatClient.off("ai_indicator.stop", this.handleStopGenerating);
     try {
-      const channelState = await this.channel.query();
-      const message = channelState.messages.find(
-        (m) => m.id === this.message.id
-      );
-
-      if (message && message.generating) {
-        console.log(
-          `Message ${this.message.id} is still generating, updating status`
-        );
-        await this.chatClient.partialUpdateMessage(this.message.id, {
-          set: { generating: false },
-        });
-      }
+      await this.chatClient.partialUpdateMessage(this.message.id, {
+        set: { generating: false },
+      });
     } catch (e) {
-      console.error("Error updating message on dispose", e);
+      console.error("Could not clear generating status on dispose", e);
     }
     this.onDispose();
   };
@@ -86,15 +71,66 @@ export class OpenAIResponseHandler {
     await this.dispose();
   };
 
-  private handle = async (
-    event: OpenAI.Beta.Assistants.AssistantStreamEvent
-  ) => {
-    try {
-      const { cid, id } = this.message;
-      console.log(`Handling OpenAI event: ${event.event}`, { cid, id });
+  private observeStream = async (stream: AssistantStream) => {
+    const { cid, id } = this.message;
 
-      switch (event.event) {
-        case "thread.run.requires_action":
+    stream
+      .on("textCreated", () => {
+        console.log("Sending AI_STATE_GENERATING indicator");
+        this.channel.sendEvent({
+          type: "ai_indicator.update",
+          ai_state: "AI_STATE_GENERATING",
+          cid: cid,
+          message_id: id,
+        });
+      })
+      .on("textDelta", (textDelta) => {
+        this.message_text += textDelta.value || "";
+        if (
+          this.chunk_counter % 15 === 0 ||
+          (this.chunk_counter < 8 && this.chunk_counter % 2 === 0)
+        ) {
+          const text = this.message_text;
+          this.chatClient.partialUpdateMessage(id, {
+            set: { text, generating: true },
+          });
+        }
+        this.chunk_counter += 1;
+      })
+      .on("textDone", (text) => {
+        const finalText = this.message_text;
+        this.chatClient.partialUpdateMessage(id, {
+          set: { text: finalText, generating: false },
+        });
+        this.channel.sendEvent({
+          type: "ai_indicator.clear",
+          cid: cid,
+          message_id: id,
+        });
+      })
+      .on("runStepCreated", (runStep) => {
+        if (runStep.run_id) {
+          this.run_id = runStep.run_id;
+        }
+        if (runStep.type === "message_creation") {
+          console.log("Sending AI_STATE_GENERATING indicator");
+          this.channel.sendEvent({
+            type: "ai_indicator.update",
+            ai_state: "AI_STATE_GENERATING",
+            cid: cid,
+            message_id: id,
+          });
+        }
+      })
+      .on("end", async () => {
+        console.log("Stream ended, checking for required actions");
+        const currentRun = stream.currentRun();
+
+        if (
+          currentRun &&
+          currentRun.status === "requires_action" &&
+          currentRun.required_action?.type === "submit_tool_outputs"
+        ) {
           console.log("Sending AI_STATE_EXTERNAL_SOURCES indicator");
           await this.channel.sendEvent({
             type: "ai_indicator.update",
@@ -102,63 +138,57 @@ export class OpenAIResponseHandler {
             cid: cid,
             message_id: id,
           });
-          break;
-        case "thread.message.created":
-          console.log("Sending AI_STATE_GENERATING indicator");
-          await this.channel.sendEvent({
-            type: "ai_indicator.update",
-            ai_state: "AI_STATE_GENERATING",
-            cid: cid,
-            message_id: id,
-          });
-          break;
-        case "thread.message.delta":
-          const content = event.data.delta.content;
-          if (!content || content[0]?.type !== "text") return;
-          this.message_text += content[0].text?.value ?? "";
 
-          console.log(
-            `Delta received: chunk ${this.chunk_counter}, text length: ${this.message_text.length}`
-          );
+          const toolCalls =
+            currentRun.required_action.submit_tool_outputs.tool_calls;
+          const toolOutputs = [];
 
-          if (
-            this.chunk_counter % 15 === 0 ||
-            (this.chunk_counter < 8 && this.chunk_counter % 2 === 0)
-          ) {
-            const text = this.message_text;
-            console.log(`Sending partial update: ${text.substring(0, 100)}...`);
-            await this.chatClient.partialUpdateMessage(id, {
-              set: { text, generating: true },
-            });
+          for (const toolCall of toolCalls) {
+            if (toolCall.function.name === "web_search") {
+              try {
+                const args = JSON.parse(toolCall.function.arguments);
+                const searchResult = await this.performWebSearch(args.query);
+                toolOutputs.push({
+                  tool_call_id: toolCall.id,
+                  output: searchResult,
+                });
+              } catch (e) {
+                console.error(
+                  "Error parsing tool arguments or performing web search",
+                  e
+                );
+                toolOutputs.push({
+                  tool_call_id: toolCall.id,
+                  output: JSON.stringify({ error: "failed to call tool" }),
+                });
+              }
+            }
           }
-          this.chunk_counter += 1;
-          break;
-        case "thread.message.completed":
-          const text = this.message_text;
-          console.log(`Message completed with text length: ${text.length}`);
-          await this.chatClient.partialUpdateMessage(id, {
-            set: { text, generating: false },
-          });
-          await this.channel.sendEvent({
-            type: "ai_indicator.clear",
-            cid: cid,
-            message_id: id,
-          });
-          await this.dispose();
-          break;
-        case "thread.run.step.created":
-          this.run_id = event.data.id;
-          console.log(`Run step created: ${this.run_id}`);
-          break;
-        case "thread.run.failed":
-          const errorMessage =
-            event.data.last_error?.message ?? "Thread run failed";
-          console.error(`Thread run failed: ${errorMessage}`);
-          await this.handleError(new Error(errorMessage));
-          break;
-      }
+
+          if (toolOutputs.length > 0) {
+            // Create a new stream for tool output submission
+            const toolStream =
+              this.openai.beta.threads.runs.submitToolOutputsStream(
+                this.openAiThread.id,
+                currentRun.id,
+                { tool_outputs: toolOutputs }
+              );
+
+            // Recursively observe the new stream
+            await this.observeStream(toolStream);
+          }
+        }
+      })
+      .on("error", async (error) => {
+        console.error("Stream error:", error);
+        await this.handleError(error);
+      });
+
+    // Wait for the stream to complete
+    try {
+      await stream.finalMessages();
     } catch (error) {
-      console.error("Error handling event:", error);
+      console.error("Error waiting for final messages:", error);
       await this.handleError(error as Error);
     }
   };
@@ -181,5 +211,57 @@ export class OpenAIResponseHandler {
       },
     });
     await this.dispose();
+  };
+
+  private performWebSearch = async (query: string): Promise<string> => {
+    const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
+
+    if (!TAVILY_API_KEY) {
+      return JSON.stringify({
+        error: "Web search is not available. API key not configured.",
+      });
+    }
+
+    console.log(`Performing web search for: "${query}"`);
+
+    try {
+      const response = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${TAVILY_API_KEY}`,
+        },
+        body: JSON.stringify({
+          query: query,
+          search_depth: "advanced",
+          max_results: 5,
+          include_answer: true,
+          include_raw_content: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Tavily search failed for query "${query}":`, errorText);
+        return JSON.stringify({
+          error: `Search failed with status: ${response.status}`,
+          details: errorText,
+        });
+      }
+
+      const data = await response.json();
+      console.log(`Tavily search successful for query "${query}"`);
+
+      return JSON.stringify(data);
+    } catch (error) {
+      console.error(
+        `An exception occurred during web search for "${query}":`,
+        error
+      );
+      return JSON.stringify({
+        error: "An exception occurred during the search.",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   };
 }

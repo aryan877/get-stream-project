@@ -226,15 +226,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const [inputText, setInputText] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const isGenerating = messages.some((m) => m.generating && !!m.text?.length);
+    const isGenerating = messages.some((m) => m.generating);
 
     const handleStopGenerating = () => {
       if (channel) {
-        channel.sendEvent({
-          type: "ai_indicator.stop",
-          cid: channel.cid,
-          message_id: messages.find((m) => m.generating)?.id,
-        });
+        const generatingMessage = messages.find((m) => m.generating);
+        if (generatingMessage) {
+          channel.sendEvent({
+            type: "ai_indicator.stop",
+            cid: channel.cid,
+            message_id: generatingMessage.id,
+          });
+        }
       }
     };
 

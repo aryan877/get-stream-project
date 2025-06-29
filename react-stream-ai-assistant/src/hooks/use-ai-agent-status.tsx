@@ -140,11 +140,10 @@ export const useAIAgentStatus = ({
   useEffect(() => {
     checkStatus();
   }, [checkStatus]);
-
   // Poll status periodically
   useEffect(() => {
     if (channelId) {
-      const interval = setInterval(checkStatus, 30000); // Check every 30 seconds
+      const interval = setInterval(checkStatus, 120000); // Check every 2 minutes
       return () => clearInterval(interval);
     }
   }, [channelId, checkStatus]);
